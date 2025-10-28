@@ -9,10 +9,11 @@ public class Inimigo extends GameObject {
 	public static final int ESQUERDA = 4;
 	public static final int CENTRO = 0;
 
-	private static final Vector2D cima = new Vector2D(0, 20);
-	private static final Vector2D baixo = new Vector2D(0, -20);
-	private static final Vector2D direita = new Vector2D(-20, 0);
-	private static final Vector2D esquerda = new Vector2D(20, 0);
+	// FIX: Use GameConfig for movement speeds (adjusted for 60 FPS)
+	private static final Vector2D cima = new Vector2D(0, GameConfig.MOVEMENT_SPEED);
+	private static final Vector2D baixo = new Vector2D(0, -GameConfig.MOVEMENT_SPEED);
+	private static final Vector2D direita = new Vector2D(-GameConfig.MOVEMENT_SPEED, 0);
+	private static final Vector2D esquerda = new Vector2D(GameConfig.MOVEMENT_SPEED, 0);
 
 	private int direcao;
 	private boolean visible;
@@ -25,8 +26,8 @@ public class Inimigo extends GameObject {
 		getSpriteSheet().addImage("assets/images/helicoptero_sprite02.png");
 
 		setScale(0.01f);
-		setVisible(true);
-		
+		// FIX: Start invisible on title screen, will be made visible when game starts
+		setVisible(false);
 	}
 
 	//Getters e Setters
@@ -78,7 +79,8 @@ public class Inimigo extends GameObject {
 			break;
 		}
 
-		setScale(getScale() + 0.01f);
+		// FIX: Use GameConfig for scaling speed (adjusted for 60 FPS)
+		setScale(getScale() + GameConfig.ENEMY_SCALE_INCREMENT);
 
 		respawn();
 

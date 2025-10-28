@@ -7,11 +7,12 @@ public class Cenario extends GameObject {
 	public static final int DIREITA  = 3;
 	public static final int ESQUERDA = 4;
 	public static final int CENTRO   = 0;
-	
-	private static final Vector2D cima     = new Vector2D(0  ,20);
-	private static final Vector2D baixo    = new Vector2D(0  ,-20);
-	private static final Vector2D direita  = new Vector2D(-20,0);
-	private static final Vector2D esquerda = new Vector2D(20 ,0);
+
+	// FIX: Use GameConfig for movement speeds (adjusted for 60 FPS)
+	private static final Vector2D cima     = new Vector2D(0, GameConfig.MOVEMENT_SPEED);
+	private static final Vector2D baixo    = new Vector2D(0, -GameConfig.MOVEMENT_SPEED);
+	private static final Vector2D direita  = new Vector2D(-GameConfig.MOVEMENT_SPEED, 0);
+	private static final Vector2D esquerda = new Vector2D(GameConfig.MOVEMENT_SPEED, 0);
 	
 	private int direcao;
 	

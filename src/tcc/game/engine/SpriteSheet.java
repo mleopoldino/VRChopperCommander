@@ -12,11 +12,13 @@ public class SpriteSheet {
 
 	private ArrayList<Image> imagens;
 	private int currentImage;
-	
+	private int frameCounter; // FIX: Counter for sprite animation speed control
+
 	//Construtor
 	public SpriteSheet() {
 		imagens = new ArrayList<Image>();
 		currentImage = 0;
+		frameCounter = 0;
 	}
 
 	//Getters e Setters
@@ -41,8 +43,18 @@ public class SpriteSheet {
 		}
 	}
 	
+	// FIX: Update sprite animation at controlled speed (not every frame)
 	public void update(){
-		currentImage = (currentImage + 1)%imagens.size();
+		if (imagens.size() <= 1) {
+			return; // No animation needed for single image
+		}
+
+		frameCounter++;
+		// Only update sprite every SPRITE_UPDATE_FRAMES frames (adjusted for 60 FPS)
+		if (frameCounter >= GameConfig.SPRITE_UPDATE_FRAMES) {
+			currentImage = (currentImage + 1) % imagens.size();
+			frameCounter = 0;
+		}
 	}
 
 }

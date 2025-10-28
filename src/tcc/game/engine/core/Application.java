@@ -43,8 +43,6 @@ public class Application implements KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent arg0) {
-	
-		// TODO Auto-generated method stub
 		switch(arg0.getKeyCode()){
 		case KeyEvent.VK_UP:
 			core.changeCenario(Cenario.SOBE);
@@ -64,12 +62,16 @@ public class Application implements KeyListener {
 		case KeyEvent.VK_ENTER:
 			core.setCount(1);
 			break;
+		case KeyEvent.VK_ESCAPE:
+			// FIX: ESC key now works correctly in keyPressed
+			core.stopGame();
+			running = false;
+			break;
 		}
 	}
 
 	@Override
 	public void keyReleased(KeyEvent arg0) {
-		// TODO Auto-generated method stub
 		switch(arg0.getKeyCode()){
 		case KeyEvent.VK_UP:
 		case KeyEvent.VK_DOWN:
@@ -85,11 +87,7 @@ public class Application implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		if (arg0.getKeyCode() == KeyEvent.VK_ESCAPE){
-			running = false;
-		}
-		
+		// Not used - key handling moved to keyPressed/keyReleased
 	}
 
 }
