@@ -3,6 +3,12 @@
 [![Java](https://img.shields.io/badge/Java-SE_8-orange.svg)](https://www.oracle.com/java/)
 [![License](https://img.shields.io/badge/license-Educational-blue.svg)]()
 
+**[Português](#português)** | **[English](#english)**
+
+---
+
+# Português
+
 Um jogo de tiro em primeira pessoa desenvolvido em Java usando Swing, onde você controla uma metralhadora de helicóptero para abater inimigos que se aproximam.
 
 ![Game Banner](assets/icon/GameIcon.png)
@@ -222,6 +228,227 @@ Desenvolvido como parte do Trabalho de Conclusão de Curso (TCC).
 
 ---
 
-**Desenvolvido com ☕ e Java**
+# English
 
-Para dúvidas ou sugestões sobre o código, consulte o arquivo [CLAUDE.md](CLAUDE.md) para orientações técnicas detalhadas.
+A first-person shooter game developed in Java using Swing, where you control a helicopter machine gun to shoot down approaching enemies.
+
+![Game Banner](assets/icon/GameIcon.png)
+
+## 📋 About The Project
+
+VR Chopper Commander is an action game where the player takes control of a machine gun mounted on a helicopter. The objective is to shoot down enemy helicopters approaching before they escape. The game features:
+
+- First-person cockpit view
+- Score system based on hits
+- Explosion animations
+- Dynamic scenery with parallax scrolling
+- User interface with scoreboard and error counter
+
+## 🎮 How To Play
+
+### Controls
+
+| Key | Action |
+|-----|--------|
+| **↑ ↓ ← →** | Move crosshair / camera |
+| **SPACE** | Shoot |
+| **ENTER** | Start game (title screen) |
+| **ESC** | Exit game |
+
+### Objective
+
+- Destroy as many enemy helicopters as possible
+- Each hit increases your score
+- You can miss a maximum of **3 times**
+- Enemies appear at random positions and grow as they approach
+- Game Over when reaching 3 misses
+
+### Scoring System
+
+- Each destroyed helicopter = **10 points**
+- Helicopters that escape = **1 miss**
+- Total allowed misses = **3**
+
+## 🚀 How To Run
+
+### Prerequisites
+
+- Java SE Development Kit (JDK) 8 or higher
+- Operating System: Windows, macOS or Linux
+
+### Compile and Run
+
+#### Using command line:
+
+```bash
+# Compile the project
+javac -d bin -sourcepath src src/tcc/game/engine/core/Main.java
+
+# Run the game
+java -cp bin tcc.game.engine.core.Main
+```
+
+#### Using Eclipse:
+
+1. Import the project into Eclipse (File → Import → Existing Projects)
+2. Right-click on `Main.java`
+3. Select **Run As → Java Application**
+
+#### Using IntelliJ IDEA:
+
+1. Open the project in IntelliJ
+2. Configure JDK if necessary (File → Project Structure)
+3. Run the class `tcc.game.engine.core.Main`
+
+## 🏗️ Project Architecture
+
+```
+TCC_Game/
+├── src/
+│   └── tcc/game/engine/
+│       ├── core/
+│       │   ├── Main.java           # Entry point
+│       │   ├── Application.java    # Window and input handling
+│       │   └── GameCore.java       # Main loop and logic
+│       ├── GameObject.java         # Base class for objects
+│       ├── Cenario.java           # Animated scenery
+│       ├── Inimigo.java           # Enemy helicopters
+│       ├── Mira.java              # Crosshair
+│       ├── Tiro.java              # Shot visual effect
+│       ├── Explosao.java          # Explosion animation
+│       ├── GameOver.java          # Game over screen
+│       ├── SpriteSheet.java       # Animation system
+│       ├── Point.java             # 2D position representation
+│       └── Vector2D.java          # Movement vectors
+├── assets/
+│   ├── images/                    # Sprites and textures
+│   ├── sounds/                    # Sound effects (not implemented)
+│   └── icon/                      # Application icon
+└── bin/                           # Compiled files
+```
+
+### Main Components
+
+#### **GameObject**
+Base class for all game objects. Provides:
+- Positioning system (`Point`)
+- Animation system (`SpriteSheet`)
+- Scale and dimensions
+- `update()` and `draw()` methods
+
+#### **GameCore**
+Game core that manages:
+- Rendering loop (80ms per frame ~12.5 FPS)
+- Collision detection
+- Scoring system
+- Game states (menu, playing, game over)
+
+#### **Direction System**
+Uses integer constants for directions:
+- `CENTRO = 0` (stopped)
+- `SOBE = 1` (up)
+- `DESCE = 2` (down)
+- `DIREITA = 3` (right)
+- `ESQUERDA = 4` (left)
+
+## 🎨 Assets
+
+The game uses PNG sprites for all visual entities:
+
+- **Scenery**: 6 animation frames (parallax scrolling)
+- **Helicopters**: 2 animation frames
+- **Explosions**: 6 animation frames
+- **UI**: Cockpit panel, title screen, game over
+- **Effects**: Crosshair, shots
+
+### Audio (Planned)
+The following sound files are present but not implemented:
+- `BackgroundTheme.mp3`
+- `HelicopterSoundEffect.mp3`
+- `MachineGunSoundEffect.mp3`
+- `ExplosionSoundEffect.mp3`
+
+## 🛠️ Technologies Used
+
+- **Java SE 8**
+- **Java Swing** - Graphical interface
+- **Java AWT** - 2D graphics and events
+- **javax.imageio** - Image loading
+
+## 🐛 Known Issues
+
+1. ⚠️ ESC key is not functional to exit the game
+2. ⚠️ Sound system is not implemented
+3. ⚠️ Explosions don't move with the scenery
+4. ⚠️ Scoring system counts multiple times per hit
+5. ⚠️ Fixed frame rate may cause speed variations on different systems
+
+## 🔮 Future Improvements
+
+- [ ] Implement complete sound system
+- [ ] Fix known bugs
+- [ ] Add difficulty levels
+- [ ] High score system with persistence
+- [ ] Multiple enemy types
+- [ ] Power-ups and special weapons
+- [ ] Improve game loop with delta time
+- [ ] Add visual effects (particles, screen shake)
+- [ ] Settings menu (volume, controls)
+- [ ] Fullscreen mode
+
+## 📝 Development
+
+### Class Structure
+
+```
+GameObject (base)
+    ├── Cenario (inherits)
+    ├── Inimigo (inherits)
+    ├── Mira (inherits)
+    ├── Tiro (inherits)
+    ├── Explosao (inherits)
+    └── GameOver (inherits)
+```
+
+### Game Flow
+
+1. **Main** → Creates **Application**
+2. **Application** → Creates **JFrame** and **GameCore**
+3. **GameCore.paint()** → Recursive loop:
+   - Calls `update()` for logic
+   - Draws all objects
+   - Waits 80ms
+   - Calls `repaint()`
+
+### Collision Detection
+
+Uses simple **bounding box**:
+- Checks if the crosshair center is within enemy bounds
+- Collision only counts when player is shooting
+- Hit → Explosion at enemy position + respawn
+
+## 👥 Contributing
+
+This is an educational project developed as a TCC (Course Completion Project). Suggestions and improvements are welcome!
+
+### To contribute:
+
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/MyFeature`)
+3. Commit your changes (`git commit -m 'Add MyFeature'`)
+4. Push to the branch (`git push origin feature/MyFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project was developed for educational purposes.
+
+## 🙏 Acknowledgments
+
+Developed as part of a Course Completion Project (TCC).
+
+---
+
+**Developed with ☕ and Java**
+
+For questions or suggestions about the code, check the [CLAUDE.md](CLAUDE.md) file for detailed technical guidance.
