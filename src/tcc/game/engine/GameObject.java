@@ -2,13 +2,13 @@ package tcc.game.engine;
 
 import java.awt.Graphics;
 
-public  class GameObject {
+public class GameObject {
 	
 	//Definicao de Atributos
 	private Point position;
 	private int width;
-	private int heigth;
-	private float scale=1;
+	private int height;  // FIX: Corrected typo from 'heigth'
+	private float scale = 1;
 	private SpriteSheet spriteSheet;
 	
 	//Construtor
@@ -30,11 +30,11 @@ public  class GameObject {
 	public void setWidth(int width) {
 		this.width = width;
 	}
-	public int getHeigth() {
-		return heigth;
+	public int getHeight() {
+		return height;
 	}
-	public void setHeigth(int heigth) {
-		this.heigth = heigth;
+	public void setHeight(int height) {
+		this.height = height;
 	}
 
 	public SpriteSheet getSpriteSheet() {
@@ -57,8 +57,14 @@ public  class GameObject {
 	public void update(){
 		spriteSheet.update();
 	}
+
 	public void draw(Graphics g){
-		g.drawImage(spriteSheet.getCurrentImage(), position.getX(), 
+		// FIX: Defensive null check for getCurrentImage()
+		if (spriteSheet == null || spriteSheet.getCurrentImage() == null) {
+			GameLog.warn("Cannot draw GameObject: sprite or image is null");
+			return;
+		}
+		g.drawImage(spriteSheet.getCurrentImage(), position.getX(),
 				position.getY(), (int)(spriteSheet.getCurrentImage().getWidth(null)*scale), (int)(spriteSheet.getCurrentImage().getHeight(null)*scale), null);
 	}
 	

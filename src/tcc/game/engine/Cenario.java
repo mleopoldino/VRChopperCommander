@@ -18,15 +18,18 @@ public class Cenario extends GameObject {
 	
 	//Construtor
 	public Cenario(){
+		// FIX: Call super() first (required for Java constructors)
 		super();
+		// FIX: Initialize direcao field before using parent methods
+		this.direcao = CENTRO;
+		// NOW safe to call methods inherited from GameObject
 		getSpriteSheet().addImage("assets/images/cenario_sprite01.png");
 		getSpriteSheet().addImage("assets/images/cenario_sprite02.png");
 		getSpriteSheet().addImage("assets/images/cenario_sprite03.png");
 		getSpriteSheet().addImage("assets/images/cenario_sprite04.png");
 		getSpriteSheet().addImage("assets/images/cenario_sprite05.png");
 		getSpriteSheet().addImage("assets/images/cenario_sprite06.png");
-		setScale(2);
-		
+		setScale(GameConfig.CENARIO_SCALE);
 	}
 	
 	//Getters e Setters 
@@ -42,22 +45,22 @@ public class Cenario extends GameObject {
 	public void update(){
 		switch(direcao){
 		case SOBE:
-			if(getPosition().getY()<=-1){
+			if(getPosition().getYFloat() <= GameConfig.CENARIO_TOP_BOUNDARY){
 				getPosition().somaVector2D(cima);
 			}
 			break;
 		case DESCE:
-			if(getPosition().getY()>=-460){
+			if(getPosition().getYFloat() >= GameConfig.CENARIO_BOTTOM_BOUNDARY){
 				getPosition().somaVector2D(baixo);
 			}
 			break;
 		case DIREITA:
-			if(getPosition().getX()>=-755){
+			if(getPosition().getXFloat() >= GameConfig.CENARIO_LEFT_BOUNDARY){
 				getPosition().somaVector2D(direita);
 			}
 			break;
 		case ESQUERDA:
-			if(getPosition().getX()<=-20){
+			if(getPosition().getXFloat() <= GameConfig.CENARIO_RIGHT_BOUNDARY){
 				getPosition().somaVector2D(esquerda);
 			}
 			break;

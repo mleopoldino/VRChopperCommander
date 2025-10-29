@@ -17,7 +17,7 @@ cd "$(dirname "$0")"
 if [ ! -d "bin/tcc" ]; then
     echo -e "${GREEN}📦 Compilando projeto...${NC}"
     mkdir -p bin
-    javac -d bin -sourcepath src src/tcc/game/engine/core/*.java src/tcc/game/engine/*.java src/tcc/game/engine/communication/*.java
+    javac -d bin -sourcepath src $(find src -name "*.java")
 
     if [ $? -ne 0 ]; then
         echo "❌ Erro na compilação!"

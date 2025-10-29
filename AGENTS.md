@@ -7,24 +7,31 @@
 
 ## Build, Test, and Development Commands
 ```bash
-javac -d bin -sourcepath src src/tcc/game/engine/core/Main.java
+./gradlew run
 ```
-Compiles the minimum set of sources; useful for quick checks.
+Launches the game via Gradle (uses `build.gradle` to resolve sources and assets).
+
+```bash
+./gradlew test
+```
+Executes the JUnit suite that covers timer setup, collision logic, scoring, and cleanup.
 
 ```bash
 ./run.sh
 ```
-Full compile of engine packages (creates `bin` if missing) and launches the game with usage tips.
+Legacy helper that compiles all classes with `javac` and starts the game; keep for quick local checks.
 
 ```bash
 ./run_game.sh
 ```
-Runs the same entry point without rebuilding if classes already exist.
+Runs the compiled binaries without rebuilding; expects up-to-date `bin`.
 
 ```bash
 ./test_fixes.sh
 ```
-Smoke test suite that validates compilation, the timer-driven loop, ESC handler, scoring, collision visibility, and resource cleanup.
+Calls the Gradle test workflow; install Gradle or use the wrapper to avoid tooling drift.
+
+- Working directory: execute build and run commands from the project root (`TCC_Game/`). Asset paths are relative and will fail if launched elsewhere.
 
 ## Coding Style & Naming Conventions
 - Target Java 8, keep packages rooted at `tcc.game.engine`.

@@ -8,12 +8,14 @@ public class GameOver extends GameObject {
 	
 	//Construtor
 	public GameOver(){
+		// FIX: Call super() first, then initialize fields before using parent methods
 		super();
+		this.visible = true;
+		// NOW safe to call methods inherited from GameObject
 		getSpriteSheet().addImage("assets/images/gameover_sprite01.png");
 		getSpriteSheet().addImage("assets/images/gameover_sprite02.png");
-		setScale(1f);
-		visible = true;
-		setPosition(new Point(378,245));
+		setScale(GameConfig.EXPLOSAO_INITIAL_SCALE);
+		setPosition(new Point(GameConfig.INITIAL_GAMEOVER_X, GameConfig.INITIAL_GAMEOVER_Y));
 	}
 		
 	//Getters e Setters
@@ -27,11 +29,15 @@ public class GameOver extends GameObject {
 	
 	//Metodos
 	public void draw(Graphics g){
+		// FIX: Defensive null check
+		if (getSpriteSheet() == null || getSpriteSheet().getCurrentImage() == null) {
+			GameLog.warn("Cannot draw GameOver: sprite or image is null");
+			return;
+		}
 		int width = (int) (getSpriteSheet().getCurrentImage().getWidth(null) * getScale());
 		int height = (int) (getSpriteSheet().getCurrentImage().getHeight(null) * getScale());
 		g.drawImage(getSpriteSheet().getCurrentImage(), getPosition().getX() - width / 2,
 				getPosition().getY() - height / 2, width, height, null);
-		
 	}
 	
 	public void update(){

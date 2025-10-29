@@ -67,6 +67,8 @@ javac -d bin -sourcepath src src/tcc/game/engine/core/Main.java
 java -cp bin tcc.game.engine.core.Main
 ```
 
+> **Importante:** execute esses comandos a partir da raiz do repositório (`TCC_Game/`). Os assets são carregados com caminhos relativos e exigem esse diretório como `working directory`.
+
 #### Usando Eclipse:
 
 1. Importe o projeto no Eclipse (File → Import → Existing Projects)
@@ -117,7 +119,7 @@ Classe base para todos os objetos do jogo. Fornece:
 
 #### **GameCore**
 Núcleo do jogo que gerencia:
-- Loop de renderização (80ms por frame ~12.5 FPS)
+- Loop de renderização (16ms por frame ~60 FPS via Swing Timer)
 - Detecção de colisão
 - Sistema de pontuação
 - Estados do jogo (menu, jogando, game over)
@@ -140,12 +142,14 @@ O jogo utiliza sprites PNG para todas as entidades visuais:
 - **UI**: Painel do cockpit, tela inicial, game over
 - **Efeitos**: Mira, tiros
 
-### Áudio (Planejado)
-Os seguintes arquivos de som estão presentes mas não implementados:
-- `BackgroundTheme.mp3`
-- `HelicopterSoundEffect.mp3`
-- `MachineGunSoundEffect.mp3`
-- `ExplosionSoundEffect.mp3`
+### Áudio (Implementado ✅)
+Os seguintes arquivos de som estão totalmente implementados via **SoundManager**:
+- `BackgroundTheme.wav` - Música de fundo (toca na tela título)
+- `HelicopterSoundEffect.wav` - Som do helicóptero (loop durante jogo)
+- `MachineGunSoundEffect.wav` - Som de disparo da metralhadora
+- `ExplosionSoundEffect.wav` - Som de explosão
+
+**Nota**: Arquivos MP3 não são usados (Java Sound API usa formato WAV para suporte nativo)
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -154,19 +158,19 @@ Os seguintes arquivos de som estão presentes mas não implementados:
 - **Java AWT** - Gráficos 2D e eventos
 - **javax.imageio** - Carregamento de imagens
 
-## 🐛 Problemas Conhecidos
+## ✅ Correções Recentes (v2.0+)
 
-1. ⚠️ Tecla ESC não está funcional para sair do jogo
-2. ⚠️ Sistema de som não está implementado
-3. ⚠️ Explosões não se movem com o cenário
-4. ⚠️ Sistema de pontuação conta múltiplas vezes por acerto
-5. ⚠️ Frame rate fixo pode causar variações de velocidade em diferentes sistemas
+Todos os problemas previamente conhecidos foram resolvidos:
+
+1. ✅ **Tecla ESC funcional** - Sistema de eventos de teclado refatorado
+2. ✅ **Sistema de som implementado** - SoundManager com threading seguro
+3. ✅ **Explosões sincronizadas** - Movem-se corretamente com o cenário
+4. ✅ **Pontuação correta** - Conta apenas uma vez por explosão
+5. ✅ **Frame rate otimizado** - Agora roda a 60 FPS via Swing Timer
 
 ## 🔮 Melhorias Futuras
 
-- [ ] Implementar sistema de som completo
-- [ ] Corrigir bugs conhecidos
-- [ ] Adicionar níveis de dificuldade
+- [ ] Adicionar níveis de dificuldade progressiva
 - [ ] Sistema de high scores com persistência
 - [ ] Múltiplos tipos de inimigos
 - [ ] Power-ups e armas especiais
@@ -193,11 +197,10 @@ GameObject (base)
 
 1. **Main** → Cria **Application**
 2. **Application** → Cria **JFrame** e **GameCore**
-3. **GameCore.paint()** → Loop recursivo:
-   - Chama `update()` para lógica
-   - Desenha todos os objetos
-   - Aguarda 80ms
-   - Chama `repaint()`
+3. **Swing Timer** → Loop de jogo a 60 FPS:
+   - Chama `updateGameLogic()` para lógica
+   - Chama `repaint()` para renderização
+   - Timer configurado para 16ms (~60 FPS)
 
 ### Detecção de Colisão
 
@@ -288,6 +291,8 @@ javac -d bin -sourcepath src src/tcc/game/engine/core/Main.java
 java -cp bin tcc.game.engine.core.Main
 ```
 
+> **Important:** run these commands from the repository root (`TCC_Game/`). Asset lookups rely on relative paths and break if the working directory changes.
+
 #### Using Eclipse:
 
 1. Import the project into Eclipse (File → Import → Existing Projects)
@@ -338,7 +343,7 @@ Base class for all game objects. Provides:
 
 #### **GameCore**
 Game core that manages:
-- Rendering loop (80ms per frame ~12.5 FPS)
+- Rendering loop (16ms per frame ~60 FPS via Swing Timer)
 - Collision detection
 - Scoring system
 - Game states (menu, playing, game over)
@@ -361,12 +366,14 @@ The game uses PNG sprites for all visual entities:
 - **UI**: Cockpit panel, title screen, game over
 - **Effects**: Crosshair, shots
 
-### Audio (Planned)
-The following sound files are present but not implemented:
-- `BackgroundTheme.mp3`
-- `HelicopterSoundEffect.mp3`
-- `MachineGunSoundEffect.mp3`
-- `ExplosionSoundEffect.mp3`
+### Audio (Implemented ✅)
+The following sound files are fully implemented via **SoundManager**:
+- `BackgroundTheme.wav` - Background music (plays on title screen)
+- `HelicopterSoundEffect.wav` - Helicopter sound (loops during gameplay)
+- `MachineGunSoundEffect.wav` - Machine gun fire sound
+- `ExplosionSoundEffect.wav` - Explosion sound effect
+
+**Note**: MP3 files are not used (Java Sound API uses WAV format for native support)
 
 ## 🛠️ Technologies Used
 
@@ -414,11 +421,10 @@ GameObject (base)
 
 1. **Main** → Creates **Application**
 2. **Application** → Creates **JFrame** and **GameCore**
-3. **GameCore.paint()** → Recursive loop:
-   - Calls `update()` for logic
-   - Draws all objects
-   - Waits 80ms
-   - Calls `repaint()`
+3. **Swing Timer** → Game loop at 60 FPS:
+   - Calls `updateGameLogic()` for logic
+   - Calls `repaint()` for rendering
+   - Timer configured for 16ms (~60 FPS)
 
 ### Collision Detection
 

@@ -27,19 +27,22 @@ The game window will open at 756x530 pixels with the title "VR Chopper Commander
 - **Arrow Keys (UP/DOWN/LEFT/RIGHT)**: Move the view/targeting reticle
 - **SPACE**: Fire weapon
 - **ENTER**: Start game from title screen
-- **ESC**: Quit game (keyTyped handler)
+- **ESC**: Quit game (handled via KeyEventDispatcher)
 
 ## Architecture
 
 ### Core Game Loop
 
-The application uses a custom rendering loop rather than a standard game loop:
+The application uses a Swing Timer-based game loop running at 60 FPS:
 
 1. **Main.java** - Entry point that instantiates Application
-2. **Application.java** - Creates JFrame window and runs the main loop, handles all keyboard input via KeyListener
-3. **GameCore.java** - Component that handles game logic and rendering via paint() method, which calls itself recursively using repaint() after an 80ms sleep
+2. **Application.java** - Creates JFrame window and handles all keyboard input via KeyEventDispatcher
+3. **GameCore.java** - Component that handles game logic and rendering:
+   - **Swing Timer** (16ms interval) calls `updateGameLogic()` for game state updates
+   - **updateGameLogic()** updates all game objects and handles sound transitions
+   - **paintComponent()** handles rendering only (separates logic from rendering)
 
-The paint method (GameCore.java:78) serves as both the render and update loop, calling update() internally before drawing all game objects.
+The architecture follows proper Swing EDT practices with separated update and render phases.
 
 ### GameObject Hierarchy
 
@@ -77,10 +80,20 @@ Scoring: Points = (countDestroy/4) * 10, where countDestroy increments by 4 fram
 
 All assets are in the `assets/` directory:
 - `assets/images/` - PNG sprites for scenery, helicopters, explosions, UI elements
-- `assets/sounds/` - MP3 audio files (currently commented out in code)
+- `assets/sounds/` - WAV audio files (fully implemented via SoundManager)
 - `assets/icon/` - Application icon
 
 SpriteSheet handles animation by cycling through multiple images loaded for each GameObject.
+
+### Sound System
+
+The game uses a thread-safe sound system implemented via **SoundManager.java**:
+- **Background music** (BackgroundTheme.wav) plays on title screen
+- **Helicopter sound** (HelicopterSoundEffect.wav) loops during gameplay
+- **Machine gun sound** (MachineGunSoundEffect.wav) plays when firing
+- **Explosion sound** (ExplosionSoundEffect.wav) plays on enemy destruction
+
+All sound operations execute off the Event Dispatch Thread using an ExecutorService to prevent EDT blocking.
 
 ## Code Conventions
 
@@ -90,10 +103,13 @@ SpriteSheet handles animation by cycling through multiple images loaded for each
 - Classes use PascalCase
 - Package structure: tcc.game.engine (core classes in .core subpackage)
 
-## Known Issues
+## Recent Improvements (v2.0+)
 
-- Sound system is commented out (GameCore.java:26, 55-56)
-- ESC key handler in Application.keyTyped never triggers (KeyEvent.getKeyCode() returns 0 for keyTyped events)
-- Thread.sleep in paint method causes fixed 80ms frame time regardless of actual render time
-- No vsync or proper frame rate limiting
-- Collision detection happens only when Tiro is visible, not just when checking the aim
+All previously known issues have been resolved:
+
+1. ✅ **Sound system fully implemented** - SoundManager with thread-safe ExecutorService
+2. ✅ **ESC key functional** - Fixed via KeyEventDispatcher in Application.java
+3. ✅ **Game loop optimized** - Now runs at 60 FPS using Swing Timer (16ms intervals)
+4. ✅ **Proper EDT handling** - Separated game logic (updateGameLogic) from rendering (paintComponent)
+5. ✅ **Explosion counting fixed** - Explosions now count only once per hit
+6. ✅ **Code quality improvements** - Serialization warnings fixed, magic numbers extracted to GameConfig.java, immutable Vector2D pattern

@@ -1,48 +1,87 @@
 package tcc.game.engine.core;
 
 import java.awt.Image;
-import java.awt.Toolkit;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 import tcc.game.engine.Cenario;
+import tcc.game.engine.GameConfig;
+import tcc.game.engine.GameLog;
 
-public class Application implements KeyListener {
+public class Application {
 	
-	private JFrame   tela;
-	private GameCore core;
-	private boolean  running;
+	private final JFrame tela;
+	private final GameCore core;
+	private final CountDownLatch shutdownLatch;
+	private final KeyEventDispatcher keyDispatcher;
 	
 	//Construtor
-	public Application(){
+	public Application(CountDownLatch shutdownLatch){
+		this.shutdownLatch = shutdownLatch;
+
 		tela = new JFrame("VR Chopper Commander");
-		Image icon = Toolkit.getDefaultToolkit().getImage("assets/icon/GameIcon.png");		
-		
+
+		// FIX: Use ImageIO.read() instead of deprecated Toolkit.getImage()
+		Image icon = loadApplicationIcon("assets/icon/GameIcon.png");
+
 		core = new GameCore();
-		
-		running = true;
+		core.setFocusable(true);
+
 		tela.add(core);
-		tela.setIconImage(icon);
-		tela.setSize(756, 530);
-		tela.addKeyListener(this);
-		
-		tela.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		tela.setVisible(true);
+		if (icon != null) {
+			tela.setIconImage(icon);
+		}
+		tela.setSize(GameConfig.WINDOW_WIDTH, GameConfig.WINDOW_HEIGHT);
+		tela.setFocusable(true);
+		tela.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		tela.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				core.stopGame();
+			}
+
+			@Override
+			public void windowClosed(WindowEvent e) {
+				KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyDispatcher);
+				shutdownLatch.countDown();
+			}
+		});
+
+		keyDispatcher = event -> {
+			if (event.getID() == KeyEvent.KEY_PRESSED) {
+				handleKeyPressed(event);
+			} else if (event.getID() == KeyEvent.KEY_RELEASED) {
+				handleKeyReleased(event);
+			}
+			return false;
+		};
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyDispatcher);
 	}
 	
-	//Metodos
-	public void run(){
-		while (running){
-		
-		}
-		System.exit(0);
+	public void start() {
+		tela.setLocationRelativeTo(null);
+		tela.setVisible(true);
+		tela.requestFocus();
+		tela.requestFocusInWindow();
+		core.requestFocusInWindow();
+		javax.swing.SwingUtilities.invokeLater(() -> {
+			tela.requestFocusInWindow();
+			core.requestFocusInWindow();
+		});
 	}
 
-	@Override
-	public void keyPressed(KeyEvent arg0) {
+	private void handleKeyPressed(KeyEvent arg0) {
 		switch(arg0.getKeyCode()){
 		case KeyEvent.VK_UP:
 			core.changeCenario(Cenario.SOBE);
@@ -63,15 +102,13 @@ public class Application implements KeyListener {
 			core.setCount(1);
 			break;
 		case KeyEvent.VK_ESCAPE:
-			// FIX: ESC key now works correctly in keyPressed
 			core.stopGame();
-			running = false;
+			tela.dispose();
 			break;
 		}
 	}
 
-	@Override
-	public void keyReleased(KeyEvent arg0) {
+	private void handleKeyReleased(KeyEvent arg0) {
 		switch(arg0.getKeyCode()){
 		case KeyEvent.VK_UP:
 		case KeyEvent.VK_DOWN:
@@ -85,9 +122,31 @@ public class Application implements KeyListener {
 		}
 	}
 
-	@Override
-	public void keyTyped(KeyEvent arg0) {
-		// Not used - key handling moved to keyPressed/keyReleased
+	/**
+	 * FIX: Load application icon using ImageIO instead of deprecated Toolkit.getImage()
+	 * This ensures the image is fully loaded before use and provides proper error handling
+	 */
+	private Image loadApplicationIcon(String iconPath) {
+		try {
+			File iconFile = new File(iconPath);
+			if (!iconFile.exists()) {
+				GameLog.warn("Application icon not found: " + iconPath);
+				return null;
+			}
+
+			BufferedImage icon = ImageIO.read(iconFile);
+			if (icon == null) {
+				GameLog.warn("Failed to load application icon (ImageIO returned null): " + iconPath);
+				return null;
+			}
+
+			GameLog.debug("Successfully loaded application icon: " + iconPath);
+			return icon;
+
+		} catch (IOException e) {
+			GameLog.warn("Error loading application icon: " + iconPath, e);
+			return null; // Non-critical - app can run without icon
+		}
 	}
 
 }

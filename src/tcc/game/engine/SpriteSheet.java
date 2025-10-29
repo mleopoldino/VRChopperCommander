@@ -3,11 +3,11 @@ package tcc.game.engine;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
-@SuppressWarnings("unused")
 public class SpriteSheet {
 
 	private ArrayList<Image> imagens;
@@ -23,6 +23,11 @@ public class SpriteSheet {
 
 	//Getters e Setters
 	public Image getCurrentImage(){
+		// FIX: Defensive check for empty list
+		if (imagens.isEmpty()) {
+			GameLog.error("SpriteSheet has no images loaded!", null);
+			return null;
+		}
 		return imagens.get(currentImage);
 	}
 	
@@ -36,10 +41,36 @@ public class SpriteSheet {
 	
 	//Metodos
 	public void addImage(String file) {
+		// FIX: Proper error handling for image loading
 		try {
-			imagens.add(ImageIO.read(new File(file)));
-		} catch (Exception ex) {
-			ex.printStackTrace();
+			File imageFile = new File(file);
+
+			// Check if file exists before attempting to load
+			if (!imageFile.exists()) {
+				String errorMsg = "Image file not found: " + file;
+				GameLog.error(errorMsg, null);
+				throw new IOException(errorMsg);
+			}
+
+			// Load the image
+			Image image = ImageIO.read(imageFile);
+
+			// Check if ImageIO successfully loaded the image (could return null)
+			if (image == null) {
+				String errorMsg = "ImageIO failed to load image (returned null): " + file;
+				GameLog.error(errorMsg, null);
+				throw new IOException(errorMsg);
+			}
+
+			// Successfully loaded - add to list
+			imagens.add(image);
+			GameLog.debug("Successfully loaded sprite image: " + file);
+
+		} catch (IOException e) {
+			// Log the error with proper context
+			GameLog.error("Failed to load critical sprite image: " + file, e);
+			// Rethrow as RuntimeException to fail fast - game cannot run without sprites
+			throw new RuntimeException("Failed to load critical sprite image: " + file, e);
 		}
 	}
 	

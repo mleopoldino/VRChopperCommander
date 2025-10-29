@@ -1,10 +1,11 @@
 package tcc.game.engine.core;
 
-import java.awt.Component;
 import java.awt.Graphics;
 import javax.swing.Timer;
+import javax.swing.JPanel;
 
 import tcc.game.engine.Cenario;
+import tcc.game.engine.Cockpit;
 import tcc.game.engine.Explosao;
 import tcc.game.engine.GameConfig;
 import tcc.game.engine.GameObject;
@@ -14,21 +15,27 @@ import tcc.game.engine.Mira;
 import tcc.game.engine.Point;
 import tcc.game.engine.Tiro;
 import tcc.game.engine.Sound;
+import tcc.game.engine.SoundManager;
+import tcc.game.engine.GameLog;
 
-public class GameCore extends Component {
+public class GameCore extends JPanel {
 
-	private Cenario cenario;
-	private GameObject cockpit;
-	private GameObject tela;
-	private Inimigo inimigo;
-	private Tiro tiro;
-	private Mira mira;
-	private Explosao explosao;
-	private GameOver gameOver;
-	private Sound backgroundMusic;
-	private Sound helicopterSound;
-	private Sound explosionSound;
-	private Sound machineGunSound;
+	private static final long serialVersionUID = 1L;
+
+	// All game object fields marked as transient since they are not serializable
+	// and should not be persisted across sessions
+	private transient Cenario cenario;
+	private transient Cockpit cockpit;
+	private transient GameObject tela;
+	private transient Inimigo inimigo;
+	private transient Tiro tiro;
+	private transient Mira mira;
+	private transient Explosao explosao;
+	private transient GameOver gameOver;
+	private transient Sound backgroundMusic;
+	private transient Sound helicopterSound;
+	private transient Sound explosionSound;
+	private transient Sound machineGunSound;
 
 	private int countDestroy = 0;
 	private int pontos = 0;
@@ -36,29 +43,37 @@ public class GameCore extends Component {
 	private int count = 0;
 
 	// Game loop timer - 60 FPS (16ms per frame)
-	private Timer gameTimer;
+	private transient Timer gameTimer;
 	private boolean explosionJustStarted = false; // FIX: Track explosion state to count only once
+
+	// FIX: SoundManager executes sound operations on background thread (off-EDT)
+	private transient SoundManager soundManager;
 	
 	//Construtor
 	public GameCore() {
-		
+		// FIX: Initialize ALL fields BEFORE calling any parent class methods
+		// to avoid 'this' escape during construction
+
+		// Initialize sound manager first
+		soundManager = new SoundManager();
+
 		cenario = new Cenario();
-		cenario.setPosition(new Point(-378, -100));
+		cenario.setPosition(new Point(GameConfig.INITIAL_CENARIO_X, GameConfig.INITIAL_CENARIO_Y));
+
+		// FIX: Cockpit is a fixed UI overlay at screen position (0, 0)
+		cockpit = new Cockpit();
 
 		inimigo = new Inimigo();
-		inimigo.setPosition(new Point(378, 245));
+		inimigo.setPosition(new Point(GameConfig.INITIAL_INIMIGO_X, GameConfig.INITIAL_INIMIGO_Y));
 
 		mira = new Mira();
 		explosao = new Explosao();
-		
-		cockpit = new GameObject();
-		cockpit.getSpriteSheet().addImage("assets/images/painel_sprite.png");
-		
+
 		tela = new GameObject();
 		tela.getSpriteSheet().addImage("assets/images/capa_sprite.png");
 
 		tiro = new Tiro();
-			
+
 		gameOver = new GameOver();
 
 		// Initialize sounds
@@ -74,6 +89,9 @@ public class GameCore extends Component {
 		machineGunSound = new Sound();
 		machineGunSound.load("assets/sounds/MachineGunSoundEffect.wav");
 
+		// NOW safe to call parent class methods after all fields initialized
+		setDoubleBuffered(true);
+
 		// FIX: Initialize game loop timer using GameConfig
 		gameTimer = new Timer(GameConfig.FRAME_DELAY_MS, e -> {
 			updateGameLogic();
@@ -85,8 +103,9 @@ public class GameCore extends Component {
 		// Use a separate timer to start music after initialization
 		Timer musicStartTimer = new Timer(100, e -> {
 			if (getCount() == 0 && !backgroundMusic.isPlaying()) {
-				backgroundMusic.loop();
-				System.out.println("Background music started on title screen");
+				// FIX: Use SoundManager to execute sound operations off-EDT
+				soundManager.loopAsync(backgroundMusic);
+				GameLog.debug("Background music started on title screen");
 			}
 			((Timer)e.getSource()).stop(); // Stop this timer after first execution
 		});
@@ -108,18 +127,43 @@ public class GameCore extends Component {
 	}
 
 	public void setCount(int count) {
+		// FIX: Validate input - count must be 0 (title screen) or 1 (gameplay)
+		if (count != 0 && count != 1) {
+			throw new IllegalArgumentException("count must be 0 (title screen) or 1 (gameplay), got: " + count);
+		}
 		this.count = count;
 
-		// FIX: When starting game (pressing ENTER), reset enemy to initial state
 		if (count == 1) {
-			inimigo.setScale(0.01f);
-			inimigo.setPosition(new Point(
-				200 + Math.abs((int) ((Math.random() * 1000) % 800)),
-				Math.abs((int) ((Math.random() * 1000) % 200)) + 100
-			));
-			inimigo.setVisible(true);
-			System.out.println("Game started - Enemy initialized at: " + inimigo.getPosition().getX() + "," + inimigo.getPosition().getY());
+			resetGameSession();
 		}
+	}
+
+	private void resetGameSession() {
+		countDestroy = 0;
+		pontos = 0;
+		countError = 0;
+		explosionJustStarted = false;
+
+		cenario.setDirecao(Cenario.CENTRO);
+		tiro.setVisible(false);
+
+		if (machineGunSound != null && machineGunSound.isPlaying()) {
+			soundManager.stopAsync(machineGunSound);
+		}
+
+		explosao.setVisible(false);
+		explosao.setScale(1f);
+		explosao.respawn();
+
+		inimigo.setDirecao(Cenario.CENTRO);
+		inimigo.resetForNewGame(generateEnemySpawnPoint());
+	}
+
+	private Point generateEnemySpawnPoint() {
+		// FIX: Use clear random generation instead of convoluted modulo
+		int x = GameConfig.ENEMY_SPAWN_X_MIN + (int)(Math.random() * GameConfig.ENEMY_SPAWN_X_RANGE);
+		int y = GameConfig.ENEMY_SPAWN_Y_MIN + (int)(Math.random() * GameConfig.ENEMY_SPAWN_Y_RANGE);
+		return new Point(x, y);
 	}
 	
 	//Metodos
@@ -132,7 +176,7 @@ public class GameCore extends Component {
 		if (explosao.isVisible()){
 			if (!explosionJustStarted) {
 				// Explosion just started - count it once
-				this.countDestroy += 4; // Add 4 to match original scoring logic
+				this.countDestroy += GameConfig.POINTS_PER_EXPLOSION;
 				somaPontos();
 				explosionJustStarted = true;
 			}
@@ -142,21 +186,22 @@ public class GameCore extends Component {
 		}
 
 		// Handle sound transitions between title screen and gameplay
+		// FIX: All sound operations now execute off-EDT via SoundManager
 		if(getCount()==0){
 			// Title screen: play background music, stop helicopter sound
 			if (!backgroundMusic.isPlaying()) {
-				backgroundMusic.loop();
+				soundManager.loopAsync(backgroundMusic);
 			}
 			if (helicopterSound.isPlaying()) {
-				helicopterSound.stop();
+				soundManager.stopAsync(helicopterSound);
 			}
 		} else {
 			// Gameplay: stop background music, play helicopter sound
 			if (backgroundMusic.isPlaying()) {
-				backgroundMusic.stop();
+				soundManager.stopAsync(backgroundMusic);
 			}
 			if (!helicopterSound.isPlaying()) {
-				helicopterSound.loop();
+				soundManager.loopAsync(helicopterSound);
 			}
 
 			// Check game over condition
@@ -165,18 +210,19 @@ public class GameCore extends Component {
 				inimigo.setVisible(false);
 				// Stop all gameplay sounds on game over
 				if (helicopterSound.isPlaying()) {
-					helicopterSound.stop();
+					soundManager.stopAsync(helicopterSound);
 				}
 				if (machineGunSound.isPlaying()) {
-					machineGunSound.stop();
+					soundManager.stopAsync(machineGunSound);
 				}
 			}
 		}
 	}
 
 	@Override
-	public void paint(Graphics g) {
-		// FIX: paint() now only handles rendering, no game logic or Thread.sleep
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		// FIX: paintComponent() now only handles rendering, no game logic or Thread.sleep
 
 		if(getCount()==0){
 			// Title screen - only draw title image
@@ -198,12 +244,15 @@ public class GameCore extends Component {
 			cockpit.draw(g);
 
 			//Placar
-			g.drawString(String.valueOf(this.pontos*10), 160, 475);
+			g.drawString(String.valueOf(this.pontos * GameConfig.SCORE_MULTIPLIER),
+				GameConfig.SCORE_DISPLAY_X, GameConfig.SCORE_DISPLAY_Y);
 
-			if(this.countError<=3){
-				g.drawString(String.valueOf(this.countError), 580, 475);
+			if(this.countError <= GameConfig.MAX_ERRORS_ALLOWED){
+				g.drawString(String.valueOf(this.countError),
+					GameConfig.ERROR_DISPLAY_X, GameConfig.ERROR_DISPLAY_Y);
 			} else {
-				g.drawString("3", 580, 475); // FIX: Keep position consistent
+				g.drawString(String.valueOf(GameConfig.MAX_ERRORS_ALLOWED),
+					GameConfig.ERROR_DISPLAY_X, GameConfig.ERROR_DISPLAY_Y);
 			}
 
 			if(validaGameOver()){
@@ -251,7 +300,8 @@ public class GameCore extends Component {
 				explosao.setScale(inimigo.getScale());
 				inimigo.setVisible(false);
 				explosao.explode();
-				explosionSound.play();
+				// FIX: Execute sound playback off-EDT
+				soundManager.playAsync(explosionSound);
 			}
 
 			explosao.update();
@@ -266,15 +316,14 @@ public class GameCore extends Component {
 		if (gameTimer != null && gameTimer.isRunning()) {
 			gameTimer.stop();
 		}
-		// Stop all sounds
-		if (backgroundMusic != null && backgroundMusic.isPlaying()) {
-			backgroundMusic.stop();
-		}
-		if (helicopterSound != null && helicopterSound.isPlaying()) {
-			helicopterSound.stop();
-		}
-		if (machineGunSound != null && machineGunSound.isPlaying()) {
-			machineGunSound.stop();
+		// Release audio resources (now using SoundManager)
+		shutdownSound(backgroundMusic);
+		shutdownSound(helicopterSound);
+		shutdownSound(explosionSound);
+		shutdownSound(machineGunSound);
+		// Shutdown sound manager thread pool
+		if (soundManager != null) {
+			soundManager.shutdown();
 		}
 	}
 
@@ -288,28 +337,31 @@ public class GameCore extends Component {
 		if (status) {
 			// Start looping machine gun sound when firing starts
 			if (!machineGunSound.isPlaying()) {
-				machineGunSound.loop();
+				soundManager.loopAsync(machineGunSound);
 			}
 		} else {
 			// Stop machine gun sound when firing stops
-			machineGunSound.stop();
+			soundManager.stopAsync(machineGunSound);
 		}
 	}
 	
 	public void somaPontos(){
-		this.pontos = this.countDestroy/4;
+		this.pontos = this.countDestroy / GameConfig.POINTS_PER_EXPLOSION;
 	}
 	
 	public boolean validaGameOver(){
-		boolean status = true;
-		this.countError = inimigo.getErro()-this.pontos;
-		if(this.countError < 3){
-			status = false;
-			return status;
-		} else {
-			status = true;
-			return status;
+		// FIX: Simplified logic using GameConfig constant
+		this.countError = inimigo.getErro() - this.pontos;
+		return this.countError >= GameConfig.MAX_ERRORS_ALLOWED;
+	}
+
+	private void shutdownSound(Sound sound) {
+		if (sound == null) {
+			return;
 		}
+		// FIX: Use SoundManager for thread-safe shutdown
+		soundManager.stopAsync(sound);
+		soundManager.releaseAsync(sound);
 	}
 	
 }

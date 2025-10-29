@@ -22,12 +22,15 @@ public class Inimigo extends GameObject {
 	
 	//Construtor
 	public Inimigo() {
+		// FIX: Call super() first, then initialize fields before using parent methods
+		super();
+		this.direcao = CENTRO;
+		this.visible = false;
+		this.erro = 0;
+		// NOW safe to call methods inherited from GameObject
 		getSpriteSheet().addImage("assets/images/helicoptero_sprite01.png");
 		getSpriteSheet().addImage("assets/images/helicoptero_sprite02.png");
-
-		setScale(0.01f);
-		// FIX: Start invisible on title screen, will be made visible when game starts
-		setVisible(false);
+		setScale(GameConfig.ENEMY_MIN_SCALE);
 	}
 
 	//Getters e Setters
@@ -57,6 +60,11 @@ public class Inimigo extends GameObject {
 	
 	//Metodos
 	public void draw(Graphics g) {
+		// FIX: Defensive null check
+		if (getSpriteSheet() == null || getSpriteSheet().getCurrentImage() == null) {
+			GameLog.warn("Cannot draw Inimigo: sprite or image is null");
+			return;
+		}
 		int width = (int) (getSpriteSheet().getCurrentImage().getWidth(null) * getScale());
 		int height = (int) (getSpriteSheet().getCurrentImage().getHeight(null) * getScale());
 		g.drawImage(getSpriteSheet().getCurrentImage(), getPosition().getX() - width / 2,
@@ -93,19 +101,24 @@ public class Inimigo extends GameObject {
 	}
 			
 	public void respawn() {
-		int posX, posY;
+		// FIX: Use clear random generation with GameConfig constants
+		int posX = GameConfig.ENEMY_SPAWN_X_MIN + (int)(Math.random() * GameConfig.ENEMY_SPAWN_X_RANGE);
+		int posY = GameConfig.ENEMY_SPAWN_Y_MIN + (int)(Math.random() * GameConfig.ENEMY_SPAWN_Y_RANGE);
 
-		posX = +200 + Math.abs((int) ((Math.random() * 1000) % 800 ));
-		posY = Math.abs((int) ((Math.random() * 1000) % 200)) + 100;
-		if (!visible || (visible && getScale() >= 1.0f)) {
-			setScale(0.01f);
-			System.out.println("New Helicoptero "+posX+","+posY);
+		if (!visible || (visible && getScale() >= GameConfig.ENEMY_MAX_SCALE)) {
+			setScale(GameConfig.ENEMY_MIN_SCALE);
+			GameLog.debug("New helicopter respawned at " + posX + "," + posY);
 			setPosition(new Point(posX, posY));
 			setVisible(true);
 			this.erro++;
-			//System.out.println(this.erro);
 		}
-
+	}
+	
+	public void resetForNewGame(Point spawnPoint) {
+		setErro(0);
+		setScale(GameConfig.ENEMY_MIN_SCALE);
+		setPosition(spawnPoint);
+		setVisible(true);
 	}
 	
 	

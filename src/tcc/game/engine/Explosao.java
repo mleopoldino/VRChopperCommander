@@ -2,7 +2,7 @@ package tcc.game.engine;
 
 import java.awt.Graphics;
 
-public class Explosao extends GameObject{
+public class Explosao extends GameObject {
 	
 	public static final int SOBE     = 1;
 	public static final int DESCE    = 2;
@@ -21,14 +21,17 @@ public class Explosao extends GameObject{
 	
 	//Construtor
 	public Explosao(){
-		visible = false;
+		// FIX: Call super() first, then initialize fields before using parent methods
+		super();
+		this.visible = false;
+		this.direcao = CENTRO;
+		// NOW safe to call methods inherited from GameObject
 		getSpriteSheet().addImage("assets/images/explosao_sprite01.png");
 		getSpriteSheet().addImage("assets/images/explosao_sprite02.png");
 		getSpriteSheet().addImage("assets/images/explosao_sprite03.png");
 		getSpriteSheet().addImage("assets/images/explosao_sprite04.png");
 		getSpriteSheet().addImage("assets/images/explosao_sprite05.png");
 		getSpriteSheet().addImage("assets/images/explosao_sprite06.png");
-		
 	}
 	
 	//Getters e Setters
@@ -67,7 +70,7 @@ public class Explosao extends GameObject{
 			setScale(getScale() + GameConfig.EXPLOSION_SCALE_INCREMENT);
 
 			super.update();
-			if (getSpriteSheet().getImageNumber() == 5){
+			if (getSpriteSheet().getImageNumber() == GameConfig.EXPLOSION_FINAL_FRAME){
 				visible = false;
 				respawn();
 			}
@@ -75,6 +78,11 @@ public class Explosao extends GameObject{
 	}
 	
 	public void draw(Graphics g){
+		// FIX: Defensive null check
+		if (getSpriteSheet() == null || getSpriteSheet().getCurrentImage() == null) {
+			GameLog.warn("Cannot draw Explosao: sprite or image is null");
+			return;
+		}
 		int width  = (int) (getSpriteSheet().getCurrentImage().getWidth(null)*getScale());
 		int height = (int) (getSpriteSheet().getCurrentImage().getHeight(null)*getScale());
 		g.drawImage(getSpriteSheet().getCurrentImage(), getPosition().getX()-width/2, getPosition().getY()-height/2 ,

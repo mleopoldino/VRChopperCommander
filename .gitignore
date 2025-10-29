@@ -1,1 +1,22 @@
+# Build directories and artifacts
 target/
+bin/
+*.class
+
+# IDE specific files
+.idea/
+.classpath
+.project
+.settings/
+*.iml
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Gradle
+.gradle/
+build/
+
+# Logs
+*.log
